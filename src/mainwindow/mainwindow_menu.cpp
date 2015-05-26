@@ -44,6 +44,7 @@ $Date: 2013-04-28 14:14:07 +0200 (So, 28. Apr 2013) $
 #include "../autoroute/mazerouter/mazerouter.h"
 #include "../autoroute/autorouteprogressdialog.h"
 #include "../autoroute/drc.h"
+#include "../autoroute/gcodedialog.h"
 #include "../items/virtualwire.h"
 #include "../items/resizableboard.h"
 #include "../items/jumperitem.h"
@@ -4347,6 +4348,25 @@ void MainWindow::orderFab()
 {
 	QDesktopServices::openUrl(QString("http://fab.fritzing.org/"));
 }
+
+
+void MainWindow::doGcode() {
+    int boardCount;
+    ItemBase * board = m_pcbGraphicsView->findSelectedBoard(boardCount);
+    if (boardCount == 0) {
+        QMessageBox::critical(this, tr("Fritzing"),
+                   tr("Your sketch does not have a board yet! Please add a PCB in order to export gcode."));
+        return;
+    }
+    if (board == NULL) {
+        QMessageBox::critical(this, tr("Fritzing"),
+                   tr("Please select a PCB. Gcode export can only work on one board at a time."));
+        return;
+    }
+
+    m_pcbGraphicsView->exportGcode();
+}
+
 
 void MainWindow::setGroundFillSeeds() {
     int boardCount;

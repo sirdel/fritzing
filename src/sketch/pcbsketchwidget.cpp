@@ -39,6 +39,7 @@ $Date: 2013-04-28 13:51:10 +0200 (So, 28. Apr 2013) $
 #include "../fsvgrenderer.h"
 #include "../autoroute/autorouteprogressdialog.h"
 #include "../autoroute/drc.h"
+#include "../autoroute/gcodedialog.h"
 #include "../items/groundplane.h"
 #include "../items/jumperitem.h"
 #include "../utils/autoclosemessagebox.h"
@@ -2079,6 +2080,13 @@ void PCBSketchWidget::clearGroundFillSeeds()
 	}
 
 	m_undoStack->waitPush(command, PropChangeDelay);
+}
+
+void PCBSketchWidget::exportGcode()
+{
+    int boardCount;
+    GcodeDialog gcode(this, findSelectedBoard(boardCount), m_routingStatus.m_connectorsLeftToRoute, m_routingStatus.m_netCount ,NULL);
+    gcode.exec();
 }
 
 

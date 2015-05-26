@@ -28,6 +28,7 @@ src/autoroute/cmrouter/tileutils.h  \
 src/autoroute/mazerouter/mazerouter.h  \
 src/autoroute/zoomcontrols.h \
 src/autoroute/drc.h \
+src/autoroute/gcodedialog.h \
  
 SOURCES += \
 src/autoroute/autorouter.cpp \
@@ -42,3 +43,4 @@ src/autoroute/cmrouter/search2.cpp   \
 src/autoroute/mazerouter/mazerouter.cpp  \
 src/autoroute/zoomcontrols.cpp \
 src/autoroute/drc.cpp \
+src/autoroute/gcodedialog.cpp \

@@ -387,7 +387,7 @@ protected slots:
 	void selectAllVias();
 
 	void shareOnline();
-	void saveBundledPart(const QString &moduleId=___emptyString___);
+    void saveBundledPart(const QString &moduleIdexportGcode=___emptyString___);
 	QStringList saveBundledAux(ModelPart *mp, const QDir &destFolder);
 
 	void binSaved(bool hasAlienParts);
@@ -440,6 +440,7 @@ protected slots:
 	void moveLock();
 	void setSticky();
 	void autorouterSettings();
+    void doGcode();
 	void boardDeletedSlot();
 	void cursorLocationSlot(double, double, double=0.0, double=0.0);
 	void locationLabelClicked();
@@ -736,6 +737,7 @@ protected:
 	QAction *m_exportPdfAct;
 	QAction *m_exportEagleAct;
 	QAction *m_exportGerberAct;
+    QAction *m_exportGCODEAct;
 	QAction *m_exportEtchablePdfAct;
 	QAction *m_exportEtchableSvgAct;
 	QAction *m_exportBomAct;

@@ -94,6 +94,7 @@ public:
 	void getBendpointWidths(class Wire *, double w, double & w1, double & w2, bool & negativeOffsetRect);
 	double getSmallerTraceWidth(double minDim);
 	bool groundFill(bool fillGroundTraces, ViewLayer::ViewLayerID, QUndoCommand * parentCommand);
+    void exportGcode();
 	void setGroundFillSeeds();
 	void clearGroundFillSeeds();
 	QString generateCopperFillUnit(ItemBase * itemBase, QPointF whereToStart);
