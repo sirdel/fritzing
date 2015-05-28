@@ -35,9 +35,16 @@ private:
     QGraphicsScene *m_scene;
     QListWidget * m_listWidget;
 
+    void SetupControls(int, int iRooted, int iunRooted);
+
 public:
     GcodeDialog(class PCBSketchWidget *, QGraphicsItem * board, int, int, QWidget *parent = 0);
+
     ~GcodeDialog();
+
+ public slots:
+    void doSave();
+    void doClose();
 
 
 };

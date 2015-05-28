@@ -3,32 +3,30 @@
 #define PROGRESS ":/resources/images/progress.gif"
 
 
-
-GcodeDialog::GcodeDialog(PCBSketchWidget *sketchWidget, QGraphicsItem *board, int unRooted, int Rooted, QWidget *parent)
-    : QDialog(parent)
-{ 
+void GcodeDialog::SetupControls(int brdlayers, int iRooted, int iunRooted)
+{
     this->setWindowTitle(QObject::tr("GCODE Viewer"));
 
     QVBoxLayout * windowLayout = new QVBoxLayout();
     this->setLayout(windowLayout);
 
-    QLabel * label = new QLabel(tr("Display top & bottom copper layers as gcode.\nFound %1 net(s) and xx pad(s).").arg(Rooted),this);
-    label->setWordWrap(true);
-    windowLayout->addWidget(label);
-
-    // check for unrooted
-    if (unRooted > 0) {
-        QLabel * warn = new QLabel( tr("Warning %1 connector(s) still to be routed").arg(unRooted), this );
+    // warning if rooting still not complete
+    if (iunRooted > 0) {
+        QLabel * warn = new QLabel( tr("Warning %1 connector(s) still to be routed").arg(iunRooted), this );
         warn->setWordWrap(false);
         windowLayout->addWidget(warn);
     }
+
+    QLabel * label = new QLabel(tr("Display top & bottom copper layers as gcode.\nFound %1 net(s) and xx pad(s).").arg(iRooted),this);
+    label->setWordWrap(true);
+    windowLayout->addWidget(label);
 
     // display board layers
     QGroupBox *boardBox  = new QGroupBox(tr("Board Layers"), this);
     QCheckBox *chkBot = new QCheckBox(tr("bottom layer"), this);
     QCheckBox *chkTop = new QCheckBox(tr("top layer"), this);
     chkBot->setChecked(true);
-    if ( sketchWidget->boardLayers()>1 ) chkTop->setChecked(true);
+    if ( brdlayers>1 ) chkTop->setChecked(true);
     else chkTop->setEnabled(false);
     QHBoxLayout *hbox = new QHBoxLayout;
     hbox->addWidget(chkBot);
@@ -43,7 +41,7 @@ GcodeDialog::GcodeDialog(PCBSketchWidget *sketchWidget, QGraphicsItem *board, in
     QComboBox *cboDrill = new QComboBox(this);
     cboDrill->addItem(tr("as seperate file"));
     cboDrill->addItem(tr("bottom"));
-    if ( sketchWidget->boardLayers()>1 ) cboDrill->addItem(tr("top"));
+    if ( brdlayers>1 ) cboDrill->addItem(tr("top"));
     QVBoxLayout *vbox = new QVBoxLayout;
     vbox->addWidget(chkMill);
     vbox->addWidget(lblDrill);
@@ -52,9 +50,58 @@ GcodeDialog::GcodeDialog(PCBSketchWidget *sketchWidget, QGraphicsItem *board, in
     windowLayout->addWidget(drillBox);
 
 
+    // Serial options
+    QGroupBox *serialBox  = new QGroupBox( tr("Miller options"), this);
+    QLabel * lblSerial = new QLabel(tr("Serial Device"),this);
+    QLabel * lblMovie = new QLabel(tr("progress icon"),this);
+    QMovie * movie = new QMovie(PROGRESS);
+    if (movie->isValid()) {
+        lblMovie->setMovie(movie);
+        movie->start();
+    }
+    QComboBox *cboSerial = new QComboBox(this);
+    cboSerial->addItem(tr("ttyUSB0"));
+    QPushButton *pushMill = new QPushButton(tr("Download to miller"),this);
+
+    QVBoxLayout *serialVBbox = new QVBoxLayout;
+    serialVBbox->addWidget(lblSerial);
+    serialVBbox->addWidget(lblMovie);
+    serialVBbox->addWidget(cboSerial);
+    serialVBbox->addWidget(pushMill);
+    serialBox->setLayout(serialVBbox);
+    windowLayout->addWidget(serialBox);
+
+    // add standard dialog buttons
+    QDialogButtonBox * buttonBox = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Close);
+    buttonBox->button(QDialogButtonBox::Save)->setText(tr("Save As.."));
+    buttonBox->button(QDialogButtonBox::Close)->setText(tr("Close"));
+    windowLayout->addWidget(buttonBox);
+
+    connect(buttonBox, SIGNAL(accepted()), this, SLOT(doSave()));
+    connect(buttonBox, SIGNAL(rejected()), this, SLOT(doClose()));
+
+}
+
+
+void GcodeDialog::doSave(){
+    done(Accepted);
+}
+
+void GcodeDialog::doClose(){
+    done(Rejected);
+}
+
+
+GcodeDialog::GcodeDialog(PCBSketchWidget *sketchWidget, QGraphicsItem *board, int unRooted, int Rooted, QWidget *parent)
+    : QDialog(parent)
+{ 
+    // add controls to the window
+    SetupControls(sketchWidget->boardLayers(), Rooted, unRooted);
+
+
     using namespace ClipperLib;
 
-    typedef std::vector<IntPoint> Path;
+    typedef std::vector<IntPoint> Path;// check for unrooted
     typedef std::vector<Path> Paths;
 
 
@@ -162,31 +209,7 @@ GcodeDialog::GcodeDialog(PCBSketchWidget *sketchWidget, QGraphicsItem *board, in
     }
 
 
-    // Serial options
-    QGroupBox *serialBox  = new QGroupBox( tr("Miller options"), this);
-    QLabel * lblSerial = new QLabel(tr("Serial Device"),this);
-    QLabel * lblMovie = new QLabel(tr("progress icon"),this);
-    QMovie * movie = new QMovie(PROGRESS);
-    if (movie->isValid()) {
-        lblMovie->setMovie(movie);
-        movie->start();
-    }
-    QComboBox *cboSerial = new QComboBox(this);
-    cboSerial->addItem(tr("ttyUSB0"));
-    QPushButton *pushMill = new QPushButton(tr("Download to miller"),this);
 
-    QVBoxLayout *serialVBbox = new QVBoxLayout;
-    serialVBbox->addWidget(lblSerial);
-    serialVBbox->addWidget(lblMovie);
-    serialVBbox->addWidget(cboSerial);
-    serialVBbox->addWidget(pushMill);
-    serialBox->setLayout(serialVBbox);
-    windowLayout->addWidget(serialBox);
-
-    // add standard dialog buttons
-    QDialogButtonBox * buttonBox = new QDialogButtonBox(QDialogButtonBox::Cancel);
-    buttonBox->button(QDialogButtonBox::Cancel)->setText(tr("Save As.."));
-    windowLayout->addWidget(buttonBox);
 
 }
 
