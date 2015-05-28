@@ -75,6 +75,7 @@ $Date: 2013-04-22 23:44:56 +0200 (Mo, 22. Apr 2013) $
 
 static QString eagleActionType = ".eagle";
 static QString gerberActionType = ".gerber";
+static QString gcodeActionType = ".gcode";
 static QString jpgActionType = ".jpg";
 #if (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
 static QString psActionType = ".ps";
@@ -509,6 +510,11 @@ void MainWindow::doExport() {
 		exportToGerber();
 		return;
 	}
+
+    if (actionType.compare(gcodeActionType) == 0) {
+        exportGCODE();
+        return;
+    }
 
 	if (actionType.compare(bomActionType) == 0) {
 		exportBOM();
@@ -1011,6 +1017,11 @@ void MainWindow::createExportActions() {
 	m_exportGerberAct->setData(gerberActionType);
     m_exportGerberAct->setStatusTip(tr("Export the current sketch to Extended Gerber format (RS-274X) for professional PCB production"));
 	connect(m_exportGerberAct, SIGNAL(triggered()), this, SLOT(doExport()));
+
+    m_exportGCODEAct = new QAction(tr("GCODE..."), this);
+    m_exportGCODEAct->setData(gerberActionType);
+    m_exportGCODEAct->setStatusTip(tr("Export the current sketch to GCODE for PCB milling production"));
+    connect(m_exportGCODEAct, SIGNAL(triggered()), this, SLOT(exportGCODE()));
 
 	m_exportEtchablePdfAct = new QAction(tr("Etchable (PDF)..."), this);
 	m_exportEtchablePdfAct->setStatusTip(tr("Export the current sketch to PDF for DIY PCB production (photoresist)"));

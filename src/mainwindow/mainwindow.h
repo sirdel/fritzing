@@ -440,7 +440,7 @@ protected slots:
 	void moveLock();
 	void setSticky();
 	void autorouterSettings();
-    void doGcode();
+    void exportGCODE();
 	void boardDeletedSlot();
 	void cursorLocationSlot(double, double, double=0.0, double=0.0);
 	void locationLabelClicked();
@@ -502,6 +502,7 @@ protected:
 	void setActionsIcons(int index, QList<QAction *> &);
 	void exportToEagle();
 	void exportToGerber();
+    void exportToGCODE();
     void exportBOM();
     void exportNetlist();
     void exportSpiceNetlist();

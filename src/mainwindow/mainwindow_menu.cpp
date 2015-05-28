@@ -4350,7 +4350,7 @@ void MainWindow::orderFab()
 }
 
 
-void MainWindow::doGcode() {
+void MainWindow::exportGCODE() {
     int boardCount;
     ItemBase * board = m_pcbGraphicsView->findSelectedBoard(boardCount);
     if (boardCount == 0) {
