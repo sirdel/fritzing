@@ -1430,6 +1430,7 @@ void MainWindow::populateExportMenu() {
 	productionMenu->addAction(m_exportEtchableSvgAct);
 	productionMenu->addSeparator();
 	productionMenu->addAction(m_exportGerberAct);
+    productionMenu->addAction(m_exportGCODEAct);
 }
 
 
