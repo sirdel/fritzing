@@ -1,0 +1,126 @@
+String SketchWidget::renderToSVG(RenderThing & renderThing, QList<QGraphicsItem *> & itemsAndLabels)
+{
+	renderThing.empty = true;
+
+	double width = renderThing.itemsBoundingRect.width();
+	double height = renderThing.itemsBoundingRect.height();
+	QPointF offset = renderThing.itemsBoundingRect.topLeft();
+
+	if (!renderThing.offsetRect.isEmpty()) {
+		offset = renderThing.offsetRect.topLeft();
+		width = renderThing.offsetRect.width();
+		height = renderThing.offsetRect.height();
+	}
+
+	renderThing.imageRect.setRect(offset.x(), offset.y(), width, height);
+	QString outputSVG = TextUtils::makeSVGHeader(renderThing.printerScale, renderThing.dpi, width, height);
+
+	QHash<QString, QString> svgHash;
+
+	// put them in z order
+	qSort(itemsAndLabels.begin(), itemsAndLabels.end(), zLessThan);
+
+	QList<ItemBase *> gotLabel;
+	foreach (QGraphicsItem * item, itemsAndLabels) {
+		ItemBase * itemBase = dynamic_cast<ItemBase *>(item);
+		if (itemBase == NULL) {
+			PartLabel * partLabel = dynamic_cast<PartLabel *>(item);
+			if (partLabel == NULL) continue;
+
+			QString labelSvg = partLabel->owner()->makePartLabelSvg(renderThing.blackOnly, renderThing.dpi, renderThing.printerScale);
+			if (labelSvg.isEmpty()) continue;
+
+            labelSvg = translateSVG(labelSvg, partLabel->owner()->partLabelScenePos() - offset, renderThing.dpi, renderThing.printerScale);
+            labelSvg = QString("<g partID='%1' id='partLabel'>%2</g>").arg(partLabel->owner()->id()).arg(labelSvg);
+
+			renderThing.empty = false;
+			outputSVG.append(labelSvg);
+			continue;
+		}
+			
+		if (itemBase->itemType() != ModelPart::Wire) {
+            double factor;
+			QString itemSvg = itemBase->retrieveSvg(itemBase->viewLayerID(), svgHash, renderThing.blackOnly, renderThing.dpi, factor);
+			if (itemSvg.isEmpty()) continue;
+
+            TextUtils::fixMuch(itemSvg, false);
+
+            QDomDocument doc;
+            QString errorStr;
+	        int errorLine;
+	        int errorColumn;
+            if (doc.setContent(itemSvg, &errorStr, &errorLine, &errorColumn)) {
+                bool changed = false;
+                if (renderThing.renderBlocker) {
+                    Pad * pad = qobject_cast<Pad *>(itemBase);
+                    if (pad && pad->copperBlocker()) {
+                        QDomNodeList nodeList = doc.documentElement().elementsByTagName("rect");
+                        for (int n = 0; n < nodeList.count(); n++) {
+                            QDomElement element = nodeList.at(n).toElement();
+                            element.setAttribute("fill-opacity", 1);
+                            changed = true;
+                        }
+                    }
+                }
+
+			    foreach (ConnectorItem * ci, itemBase->cachedConnectorItems()) {
+                    SvgIdLayer * svgIdLayer = ci->connector()->fullPinInfo(itemBase->viewID(), itemBase->viewLayerID());
+                    if (renderThing.hideTerminalPoints && !svgIdLayer->m_terminalId.isEmpty()) {
+                        // these tend to be degenerate shapes and can cause trouble at gerber export time
+                        if (hideTerminalID(doc, svgIdLayer->m_terminalId)) changed = true;
+                    }
+
+                    if (ensureStrokeWidth(doc, svgIdLayer->m_svgId, factor)) changed = true;
+
+				    if (!ci->hasRubberBandLeg()) continue;
+
+                    // at the moment, the legs don't get a partID, but since there are no legs in PCB view, we don't care
+				    outputSVG.append(ci->makeLegSvg(offset, renderThing.dpi, renderThing.printerScale, renderThing.blackOnly));
+			    }
+
+                if (changed) {
+                    itemSvg = doc.toString(0);
+                }
+            }
+
+            QTransform t = itemBase->transform();
+            itemSvg = TextUtils::svgTransform(itemSvg, t, false, QString());
+            itemSvg = translateSVG(itemSvg, itemBase->scenePos() - offset, renderThing.dpi, renderThing.printerScale);
+            itemSvg =  QString("<g partID='%1'>%2</g>").arg(itemBase->id()).arg(itemSvg);
+			outputSVG.append(itemSvg);
+			renderThing.empty = false;
+
+			/*
+			// TODO:  deal with rotations and flips
+			QString shifted = splitter->shift(loc.x(), loc.y(), xmlName);
+			outputSVG.append(shifted);
+			empty = false;
+			splitter->shift(-loc.x(), -loc.y(), xmlName);
+			*/
+		}
+		else {
+			Wire * wire = qobject_cast<Wire *>(itemBase);
+			if (wire == NULL) continue;
+
+			//if (wire->getTrace()) {
+			//	DebugDialog::debug(QString("trace %1 %2,%3 %4,%5")
+			//		.arg(wire->id()) 
+			//		.arg(wire->line().p1().x())
+			//		.arg(wire->line().p1().y())
+			//		.arg(wire->line().p2().x())
+			//		.arg(wire->line().p2().y())
+			//		);
+			//}
+
+            QString wireSvg = makeWireSVG(wire, offset, renderThing.dpi, renderThing.printerScale, renderThing.blackOnly);
+            wireSvg = QString("<g partID='%1'>%2</g>").arg(wire->id()).arg(wireSvg);
+			outputSVG.append(wireSvg);
+			renderThing.empty = false;
+		}
+		extraRenderSvgStep(itemBase, offset, renderThing.dpi, renderThing.printerScale, outputSVG);
+	}
+
+	outputSVG += "</svg>";
+
+	return outputSVG;
+}
