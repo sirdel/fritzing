@@ -3,6 +3,50 @@
 #define PROGRESS ":/resources/images/progress.gif"
 
 
+
+RenderArea::RenderArea(QWidget *parent)
+    : QWidget(parent)
+{
+    setBackgroundRole(QPalette::Dark);
+    setAutoFillBackground(true);
+
+}
+
+RenderArea::~RenderArea(){}
+
+
+QSize RenderArea::minimumSizeHint() const
+{
+    return QSize(200, 200);
+}
+
+QSize RenderArea::sizeHint() const
+{
+    return QSize(400, 400);
+}
+
+void RenderArea::AddPoly(QPolygonF *Poly)
+{
+    mPolys.append(Poly);
+}
+
+void RenderArea::paintEvent(QPaintEvent *)
+{
+    QPainter painter(this);
+    painter.setPen(Qt::black);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+
+    // draw
+    for (int i = 0; i < mPolys.size(); ++i) {
+        painter.drawPolygon(*mPolys.at(i));
+    }
+}
+
+
+
+
+
+
 void GcodeDialog::SetupControls(int brdlayers, int iRooted, int iunRooted)
 {
     this->setWindowTitle(QObject::tr("GCODE Viewer"));
@@ -20,6 +64,10 @@ void GcodeDialog::SetupControls(int brdlayers, int iRooted, int iunRooted)
     QLabel * label = new QLabel(tr("Display top & bottom copper layers as gcode.\nFound %1 net(s) and xx pad(s).").arg(iRooted),this);
     label->setWordWrap(true);
     windowLayout->addWidget(label);
+
+    // add the pcb display
+    millRender = new RenderArea();
+    windowLayout->addWidget(millRender);
 
     // display board layers
     QGroupBox *boardBox  = new QGroupBox(tr("Board Layers"), this);
@@ -79,22 +127,15 @@ void GcodeDialog::SetupControls(int brdlayers, int iRooted, int iunRooted)
 
     connect(buttonBox, SIGNAL(accepted()), this, SLOT(doSave()));
     connect(buttonBox, SIGNAL(rejected()), this, SLOT(doClose()));
-
 }
 
 
-void GcodeDialog::doSave(){
-    done(Accepted);
-}
-
-void GcodeDialog::doClose(){
-    done(Rejected);
-}
 
 
 GcodeDialog::GcodeDialog(PCBSketchWidget *sketchWidget, QGraphicsItem *board, int unRooted, int Rooted, QWidget *parent)
     : QDialog(parent)
 { 
+
     // add controls to the window
     SetupControls(sketchWidget->boardLayers(), Rooted, unRooted);
 
@@ -211,18 +252,31 @@ GcodeDialog::GcodeDialog(PCBSketchWidget *sketchWidget, QGraphicsItem *board, in
             polyF->push_back( QPointF(pnt->X,pnt->Y) );
         }
 
-        // render it
-        QGraphicsPolygonItem * gPoly = sketchWidget->scene()->addPolygon( *polyF, QPen(Qt::blue,0) );
-        gPoly->setZValue(10);
+        // add it to the renderer
+        millRender->AddPoly(polyF);
+
+
+        //QGraphicsPolygonItem * gPoly = sketchWidget->scene()->addPolygon( *polyF, QPen(Qt::blue,0) );
+        //gPoly->setZValue(10);
+
 
         ++ii;
     }
 
-
-
+    // force refresh
+    millRender->update();
 
 }
 
 GcodeDialog::~GcodeDialog()
 {
+}
+
+
+void GcodeDialog::doSave(){
+    done(Accepted);
+}
+
+void GcodeDialog::doClose(){
+    done(Rejected);
 }

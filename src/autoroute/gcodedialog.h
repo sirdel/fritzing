@@ -18,6 +18,11 @@
 #include <QSettings>
 #include <QComboBox>
 #include <QMovie>
+#include <QBrush>
+#include <QPen>
+#include <QPixmap>
+#include <QWidget>
+#include <QPainter>
 
 #include "mazerouter/mazerouter.h"
 #include "../sketch/pcbsketchwidget.h"
@@ -28,26 +33,46 @@
 #include "../utils/clipper.h"
 
 
+class RenderArea : public QWidget
+{
+Q_OBJECT
+
+public:
+    RenderArea(QWidget *parent = 0);
+    ~RenderArea();
+    QSize minimumSizeHint() const;
+    QSize sizeHint() const;
+    void AddPoly(QPolygonF *Poly);
+
+public slots:
+
+
+protected:
+    void paintEvent(QPaintEvent *event);
+
+private:
+    QList<QPolygonF *> mPolys;
+};
+
+
 class GcodeDialog : public QDialog
 {
 Q_OBJECT
 private:
-    QGraphicsScene *m_scene;
-    QListWidget * m_listWidget;
+    RenderArea * millRender;
 
     void SetupControls(int, int iRooted, int iunRooted);
 
 public:
     GcodeDialog(class PCBSketchWidget *, QGraphicsItem * board, int, int, QWidget *parent = 0);
-
     ~GcodeDialog();
 
  public slots:
     void doSave();
     void doClose();
-
-
 };
 
 
 #endif // GCODEDIALOG_H
+
+
