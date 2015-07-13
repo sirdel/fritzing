@@ -3,50 +3,6 @@
 #define PROGRESS ":/resources/images/progress.gif"
 
 
-
-RenderArea::RenderArea(QWidget *parent)
-    : QWidget(parent)
-{
-    setBackgroundRole(QPalette::Dark);
-    setAutoFillBackground(true);
-
-}
-
-RenderArea::~RenderArea(){}
-
-
-QSize RenderArea::minimumSizeHint() const
-{
-    return QSize(200, 200);
-}
-
-QSize RenderArea::sizeHint() const
-{
-    return QSize(400, 400);
-}
-
-void RenderArea::AddPoly(QPolygonF *Poly)
-{
-    mPolys.append(Poly);
-}
-
-void RenderArea::paintEvent(QPaintEvent *)
-{
-    QPainter painter(this);
-    painter.setPen(Qt::black);
-    painter.setRenderHint(QPainter::Antialiasing, true);
-
-    // draw
-    for (int i = 0; i < mPolys.size(); ++i) {
-        painter.drawPolygon(*mPolys.at(i));
-    }
-}
-
-
-
-
-
-
 void GcodeDialog::SetupControls(int brdlayers, int iRooted, int iunRooted)
 {
     this->setWindowTitle(QObject::tr("GCODE Viewer"));
@@ -66,8 +22,16 @@ void GcodeDialog::SetupControls(int brdlayers, int iRooted, int iunRooted)
     windowLayout->addWidget(label);
 
     // add the pcb display
-    millRender = new RenderArea();
-    windowLayout->addWidget(millRender);
+    scene = new QGraphicsScene(this);
+    view = new QGraphicsView(scene,this);
+    windowLayout->addWidget(view);
+
+    // create copper effect gradient
+    QLinearGradient gradient(scene->sceneRect().topLeft(),scene->sceneRect().bottomRight());
+    gradient.setColorAt(0, Qt::yellow);
+    gradient.setColorAt(1, Qt::black);
+    scene->setBackgroundBrush(gradient);
+
 
     // display board layers
     QGroupBox *boardBox  = new QGroupBox(tr("Board Layers"), this);
@@ -253,7 +217,8 @@ GcodeDialog::GcodeDialog(PCBSketchWidget *sketchWidget, QGraphicsItem *board, in
         }
 
         // add it to the renderer
-        millRender->AddPoly(polyF);
+        scene->addPolygon( *polyF, QPen(Qt::black,0) );
+        //millRender->AddPoly(polyF);
 
 
         //QGraphicsPolygonItem * gPoly = sketchWidget->scene()->addPolygon( *polyF, QPen(Qt::blue,0) );
@@ -264,7 +229,7 @@ GcodeDialog::GcodeDialog(PCBSketchWidget *sketchWidget, QGraphicsItem *board, in
     }
 
     // force refresh
-    millRender->update();
+    //millRender->update();
 
 }
 

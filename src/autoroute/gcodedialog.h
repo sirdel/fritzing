@@ -33,33 +33,13 @@
 #include "../utils/clipper.h"
 
 
-class RenderArea : public QWidget
-{
-Q_OBJECT
-
-public:
-    RenderArea(QWidget *parent = 0);
-    ~RenderArea();
-    QSize minimumSizeHint() const;
-    QSize sizeHint() const;
-    void AddPoly(QPolygonF *Poly);
-
-public slots:
-
-
-protected:
-    void paintEvent(QPaintEvent *event);
-
-private:
-    QList<QPolygonF *> mPolys;
-};
-
 
 class GcodeDialog : public QDialog
 {
 Q_OBJECT
 private:
-    RenderArea * millRender;
+    QGraphicsScene *scene;
+    QGraphicsView *view;
 
     void SetupControls(int, int iRooted, int iunRooted);
 
